@@ -1,6 +1,13 @@
-parameters:
-  - name: buildConfiguration
-    type: string
+trigger:
+  branches:
+    include:
+     - main
+pool:
+  vmImage: 'windows-latest'
+
+  variables:
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
 
 stages:
 - stage: 'Build'
@@ -11,23 +18,24 @@ stages:
       displayName: '.NET Core restore'
       inputs:
         command: restore
-        projects: '**/DemoApi.sln'
-        vstsFeed: ''
+        projects: '**/*.sln'
 
     - task: DotNetCoreCLI@2
       displayName: '.NET Core build'
       inputs:
         command: build
-        arguments: --configuration ${{ parameters.buildConfiguration }}
-        projects: '**/DemoApi.sln'
+        projects: '**/*.sln'
+        configuration: '$(buildConfiguration)'
 
     - task: VSTest@2
-      displayName: 'Run unit'
+      displayName: 'Run unit tests'
       inputs:
         testSelector: 'testAssemblies'
         testAssemblyVer2: |
           **\*.Tests.dll
           !**\obj\**
+          !**\Integration.Tests\**
+          !**\Smoke.Tests\**
           !**\bin\**\ref\**
         codeCoverageEnabled: true
 
@@ -36,8 +44,7 @@ stages:
       inputs:
         command: publish
         publishWebProjects: false
-        projects: '**Api/Source/Api/Api.csproj'
-        arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(build.artifactstagingdirectory)'
+        projects: '**Source/Api/Api.csproj'
         zipAfterPublish: false
 
     - task: PublishBuildArtifacts@1
