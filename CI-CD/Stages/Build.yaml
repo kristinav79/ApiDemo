@@ -1,0 +1,47 @@
+parameters:
+  - name: buildConfiguration
+    type: string
+
+stages:
+- stage: 'Build'
+  jobs:
+  - job: 'Build'
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: '.NET Core restore'
+      inputs:
+        command: restore
+        projects: '**/DemoApi.sln'
+        vstsFeed: ''
+
+    - task: DotNetCoreCLI@2
+      displayName: '.NET Core build'
+      inputs:
+        command: build
+        arguments: --configuration ${{ parameters.buildConfiguration }}
+        projects: '**/DemoApi.sln'
+
+    - task: VSTest@2
+      displayName: 'Run unit'
+      inputs:
+        testSelector: 'testAssemblies'
+        testAssemblyVer2: |
+          **\*.Tests.dll
+          !**\obj\**
+          !**\bin\**\ref\**
+        codeCoverageEnabled: true
+
+    - task: DotNetCoreCLI@2
+      displayName: Publish
+      inputs:
+        command: publish
+        publishWebProjects: false
+        projects: '**Api/Source/Api/Api.csproj'
+        arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(build.artifactstagingdirectory)'
+        zipAfterPublish: false
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact'
+      inputs:
+        artifactName: 'drop'
+        pathtoPublish: '$(build.artifactstagingdirectory)'

@@ -1,0 +1,11 @@
+﻿{
+  "settings": {
+    "indentation": {
+      "useTabs": false
+    },
+    "namingRules": {
+      "allowCommonHungarianPrefixes": false
+    },
+    "maintainabilityRules": { "topLevelTypes": [ "class", "interface", "enum" ] }
+  }
+}
